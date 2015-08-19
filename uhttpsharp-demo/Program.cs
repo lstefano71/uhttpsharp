@@ -35,103 +35,104 @@ using uhttpsharpdemo.Handlers;
 
 namespace uhttpsharpdemo
 {
-    internal static class Program
-    {
-        private static void Main()
-        {
-            XmlConfigurator.Configure();
+	internal static class Program
+	{
+		private static void Main()
+		{
+			BasicConfigurator.Configure();
 
-            //var serverCertificate = X509Certificate.CreateFromCertFile(@"TempCert.cer");
+			//var serverCertificate = X509Certificate.CreateFromCertFile(@"TempCert.cer");
 
-            using (var httpServer = new HttpServer(new HttpRequestProvider()))
-            {
-                httpServer.Use(new TcpListenerAdapter(new TcpListener(IPAddress.Any, 82)));
-                //httpServer.Use(new ListenerSslDecorator(new TcpListenerAdapter(new TcpListener(IPAddress.Loopback, 443)), serverCertificate));
+			using (var httpServer = new HttpServer(new HttpRequestProvider()))
+			{
+				httpServer.Use(new TcpListenerAdapter(new TcpListener(IPAddress.Any, 82)));
+				//httpServer.Use(new ListenerSslDecorator(new TcpListenerAdapter(new TcpListener(IPAddress.Loopback, 443)), serverCertificate));
 
-                //httpServer.Use(new SessionHandler<DateTime>(() => DateTime.Now));
+				//httpServer.Use(new SessionHandler<DateTime>(() => DateTime.Now));
 
-                httpServer.Use(new ExceptionHandler());
-                httpServer.Use(new SessionHandler<dynamic>(() => new ExpandoObject(), TimeSpan.FromMinutes(20)));
-                httpServer.Use(new BasicAuthenticationHandler("Hohoho", "username", "password5"));
-                httpServer.Use(new ControllerHandler(new DerivedController(), new ModelBinder(new ObjectActivator()), new JsonView()));
+				httpServer.Use(new ExceptionHandler());
+				httpServer.Use(new TimingHandler());
+				//httpServer.Use(new SessionHandler<dynamic>(() => new ExpandoObject(), TimeSpan.FromMinutes(20)));
+				//httpServer.Use(new BasicAuthenticationHandler("Hohoho", "username", "password5"));
 
-                httpServer.Use(new CompressionHandler(DeflateCompressor.Default, GZipCompressor.Default));
-                httpServer.Use(new ControllerHandler(new BaseController(), new JsonModelBinder(), new JsonView(), StringComparer.OrdinalIgnoreCase));
-                httpServer.Use(new HttpRouter().With(string.Empty, new IndexHandler())
-                    .With("about", new AboutHandler())
-                    .With("Assets", new AboutHandler())
-                    .With("strings", new RestHandler<string>(new StringsRestController(), JsonResponseProvider.Default)));
-                
-                httpServer.Use(new ClassRouter(new MySuperHandler()));
-                httpServer.Use(new TimingHandler());
+				//httpServer.Use(new ControllerHandler(new DerivedController(), new ModelBinder(new ObjectActivator()), new JsonView()));
 
-                httpServer.Use(new MyHandler());
-                httpServer.Use(new FileHandler());
-                httpServer.Use(new ErrorHandler());
-                httpServer.Use((context, next) =>
-                {
-                    Console.WriteLine("Got Request!");
-                    return next();
-                });
+				httpServer.Use(new CompressionHandler(DeflateCompressor.Default, GZipCompressor.Default));
+				//httpServer.Use(new ControllerHandler(new BaseController(), new JsonModelBinder(), new JsonView(), StringComparer.OrdinalIgnoreCase));
+				httpServer.Use(new HttpRouter().With(string.Empty, new IndexHandler())
+						.With("about", new AboutHandler())
+						.With("Assets", new AboutHandler())
+						.With("strings", new RestHandler<string>(new StringsRestController(), JsonResponseProvider.Default)));
 
-                httpServer.Start();
-                Console.ReadLine();
-            }
+				//httpServer.Use(new ClassRouter(new MySuperHandler()));
 
-        }
-    }
+				//httpServer.Use(new MyHandler());
+				httpServer.Use(new FileHandler());
+				httpServer.Use(new ErrorHandler());
+				httpServer.Use((context, next) =>
+				{
+					Console.WriteLine("Got Request!");
+					return next();
+				});
 
-    public class MySuperHandler : IHttpRequestHandler
-    {
-        private int _index;
+				httpServer.Start();
+				Console.ReadLine();
+			}
 
-        public MySuperHandler Child
-        {
-            get
-            {
-                _index++; return this; 
-            }
-        }
-        public Task Handle(IHttpContext context, Func<Task> next)
-        {
-            context.Response = uhttpsharp.HttpResponse.CreateWithMessage(HttpResponseCode.Ok, "Hello!" + _index, true);
-            return Task.Factory.GetCompleted();
-        }
+		}
+	}
+
+	public class MySuperHandler : IHttpRequestHandler
+	{
+		private int _index;
+
+		public MySuperHandler Child
+		{
+			get
+			{
+				_index++; return this;
+			}
+		}
+		public Task Handle(IHttpContext context, Func<Task> next)
+		{
+			context.Response = uhttpsharp.HttpResponse.CreateWithMessage(HttpResponseCode.Ok, "Hello!" + _index, true);
+			return Task.Factory.GetCompleted();
+		}
 
 
-        [Indexer]
-        public Task<IHttpRequestHandler> GetChild(IHttpContext context, int index)
-        {
-            _index += index;
-            return Task.FromResult<IHttpRequestHandler>(this);
-        }
+		[Indexer]
+		public Task<IHttpRequestHandler> GetChild(IHttpContext context, int index)
+		{
+			_index += index;
+			return Task.FromResult<IHttpRequestHandler>(this);
+		}
 
-    }
+	}
 
-    class MyModel
-    {
-        public int MyProperty
-        {
-            get;
-            set;
-        }
+	class MyModel
+	{
+		public int MyProperty
+		{
+			get;
+			set;
+		}
 
-        public MyModel Model
-        {
-            get;
-            set;
-        }
-    }
+		public MyModel Model
+		{
+			get;
+			set;
+		}
+	}
 
-    internal class MyHandler : IHttpRequestHandler
-    {
-        public System.Threading.Tasks.Task Handle(IHttpContext context, Func<System.Threading.Tasks.Task> next)
-        {
-            var model = new ModelBinder(new ObjectActivator()).Get<MyModel>(context.Request.QueryString);
+	internal class MyHandler : IHttpRequestHandler
+	{
+		public System.Threading.Tasks.Task Handle(IHttpContext context, Func<System.Threading.Tasks.Task> next)
+		{
+			var model = new ModelBinder(new ObjectActivator()).Get<MyModel>(context.Request.QueryString);
 
-            return Task.Factory.GetCompleted();
-        }
-    }
+			return Task.Factory.GetCompleted();
+		}
+	}
 
-    
+
 }

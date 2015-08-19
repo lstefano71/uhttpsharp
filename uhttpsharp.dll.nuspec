@@ -2,10 +2,10 @@
 <package>
 	<metadata>
 		<id>uHttpSharp</id>
-		<version>0.1.6.22</version>
+		<version>0.1.6.23</version>
 		<title>uHttpSharp</title>
-		<authors>Shani Elharrar, Joe White, Hüseyin Uslu</authors>
-		<owners>Shani Elharrar, Joe White, Hüseyin Uslu</owners>
+		<authors>Shani Elharrar, Joe White, Hüseyin Uslu, Stefano Lanzavecchia</authors>
+		<owners>Shani Elharrar, Joe White, Hüseyin Uslu, Stefano Lanzavecchia</owners>
 		<licenseUrl>https://raw.github.com/shanielh/uHttpSharp/master/LICENSE.txt</licenseUrl>
 		<projectUrl>https://github.com/shanielh/uHttpSharp</projectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>

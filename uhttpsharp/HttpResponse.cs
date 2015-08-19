@@ -161,7 +161,7 @@ namespace uhttpsharp
 	{
 		private Stream ContentStream { get; set; }
 
-		private readonly Stream _headerStream = new MemoryStream();
+		//private readonly Stream _headerStream = new MemoryStream();
 		private readonly bool _closeConnection;
 		private readonly IHttpHeaders _headers;
 		private readonly HttpResponseCode _responseCode;
@@ -210,11 +210,9 @@ namespace uhttpsharp
 
 		public static HttpResponse CreateWithMessage(HttpResponseCode code, string message, bool keepAliveConnection, string body = "")
 		{
-			return new HttpResponse(
-					code,
-					string.Format(
-							"<html><head><title>{0}</title></head><body><h1>{0}</h1><hr>{1}</body></html>",
-							message, body), keepAliveConnection);
+			return new HttpResponse(code,
+					$"<html><head><title>{message}</title></head><body><h1>{message}</h1><hr>{body}</body></html>",
+					keepAliveConnection);
 		}
 		private static MemoryStream StringToStream(string content)
 		{
@@ -244,11 +242,11 @@ namespace uhttpsharp
 			get { return _closeConnection; }
 		}
 
-		public async Task WriteHeaders(StreamWriter writer)
-		{
-			_headerStream.Position = 0;
-			await _headerStream.CopyToAsync(writer.BaseStream).ConfigureAwait(false);
+		//public async Task WriteHeaders(StreamWriter writer)
+		//{
+		//	_headerStream.Position = 0;
+		//	await _headerStream.CopyToAsync(writer.BaseStream).ConfigureAwait(false);
 
-		}
+		//}
 	}
 }
