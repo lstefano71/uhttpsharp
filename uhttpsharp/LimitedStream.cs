@@ -1,7 +1,103 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Text;
 
 namespace uhttpsharp
 {
+    class LoggingStream : Stream
+    {
+        private readonly Stream _child;
+
+        private readonly string _tempFileName = Path.GetTempFileName();
+        public LoggingStream(Stream child)
+        {
+            _child = child;
+
+            Console.WriteLine("Logging to " + _tempFileName);
+        }
+
+        public override void Flush()
+        {
+            _child.Flush();
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            return _child.Seek(offset, origin);
+        }
+        public override void SetLength(long value)
+        {
+            _child.SetLength(value);
+        }
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            var retVal = _child.Read(buffer, offset, count);
+
+            using (var stream = File.Open(_tempFileName, FileMode.Append))
+            {
+                stream.Seek(0, SeekOrigin.End);
+                stream.Write(buffer, offset, retVal);
+            }
+
+            return retVal;
+        }
+
+        public override int ReadByte()
+        {
+            var retVal = _child.ReadByte();
+
+            using (var stream = File.Open(_tempFileName, FileMode.Append))
+            {
+                stream.Seek(0, SeekOrigin.End);
+                stream.WriteByte((byte)retVal);
+            }
+
+            return retVal;
+        }
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            _child.Write(buffer, offset, count);
+
+        }
+        public override void WriteByte(byte value)
+        {
+            _child.WriteByte(value);
+
+        }
+        public override bool CanRead
+        {
+            get { return _child.CanRead; }
+        }
+        public override bool CanSeek
+        {
+            get { return _child.CanSeek; }
+        }
+
+        public override bool CanWrite
+        {
+            get { return _child.CanWrite; }
+        }
+        public override long Length
+        {
+            get { return _child.Length; }
+        }
+        public override long Position
+        {
+            get { return _child.Position; }
+            set { _child.Position = value; }
+        }
+        public override int ReadTimeout
+        {
+            get { return _child.ReadTimeout; }
+            set { _child.ReadTimeout = value; }
+        }
+        public override int WriteTimeout
+        {
+            get { return _child.WriteTimeout; }
+            set { _child.WriteTimeout = value; }
+        }
+    }
+
     class LimitedStream : Stream
     {
         private const string _exceptionMessageFormat = "The Stream has exceeded the {0} limit specified.";

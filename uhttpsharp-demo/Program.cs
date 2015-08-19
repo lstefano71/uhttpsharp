@@ -18,10 +18,12 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Dynamic;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using log4net.Config;
 using uhttpsharp;
 using uhttpsharp.Handlers;
 using uhttpsharp.Handlers.Compression;
@@ -37,7 +39,7 @@ namespace uhttpsharpdemo
     {
         private static void Main()
         {
-            log4net.Config.XmlConfigurator.Configure();
+            XmlConfigurator.Configure();
 
             //var serverCertificate = X509Certificate.CreateFromCertFile(@"TempCert.cer");
 
@@ -47,9 +49,14 @@ namespace uhttpsharpdemo
                 //httpServer.Use(new ListenerSslDecorator(new TcpListenerAdapter(new TcpListener(IPAddress.Loopback, 443)), serverCertificate));
 
                 //httpServer.Use(new SessionHandler<DateTime>(() => DateTime.Now));
+
                 httpServer.Use(new ExceptionHandler());
+                httpServer.Use(new SessionHandler<dynamic>(() => new ExpandoObject(), TimeSpan.FromMinutes(20)));
+                httpServer.Use(new BasicAuthenticationHandler("Hohoho", "username", "password5"));
+                httpServer.Use(new ControllerHandler(new DerivedController(), new ModelBinder(new ObjectActivator()), new JsonView()));
+
                 httpServer.Use(new CompressionHandler(DeflateCompressor.Default, GZipCompressor.Default));
-                httpServer.Use(new ControllerHandler(new BaseController(), new JsonModelBinder(), new JsonView()));
+                httpServer.Use(new ControllerHandler(new BaseController(), new JsonModelBinder(), new JsonView(), StringComparer.OrdinalIgnoreCase));
                 httpServer.Use(new HttpRouter().With(string.Empty, new IndexHandler())
                     .With("about", new AboutHandler())
                     .With("Assets", new AboutHandler())
@@ -126,66 +133,5 @@ namespace uhttpsharpdemo
         }
     }
 
-    internal class SessionHandler<TSession> : IHttpRequestHandler
-    {
-        private readonly Func<TSession> _sessionFactory;
-
-        private static readonly Random RandomGenerator = new Random();
-
-        private class SessionHolder
-        {
-            private readonly TSession _session;
-            private DateTime _lastAccessTime = DateTime.Now;
-
-            public TSession Session
-            {
-                get
-                {
-                    _lastAccessTime = DateTime.Now;
-                    return _session;
-                }
-            }
-
-            public DateTime LastAccessTime
-            {
-                get
-                {
-                    return _lastAccessTime;
-                }
-            }
-
-            public SessionHolder(TSession session)
-            {
-                _session = session;
-            }
-        }
-
-        private readonly ConcurrentDictionary<string, TSession> _sessions = new ConcurrentDictionary<string, TSession>();
-
-        public SessionHandler(Func<TSession> sessionFactory)
-        {
-            _sessionFactory = sessionFactory;
-        }
-
-        public System.Threading.Tasks.Task Handle(IHttpContext context, Func<System.Threading.Tasks.Task> next)
-        {
-
-            string sessId;
-            if (!context.Cookies.TryGetByName("SESSID", out sessId))
-            {
-                sessId = RandomGenerator.Next().ToString(CultureInfo.InvariantCulture);
-                context.Cookies.Upsert("SESSID", sessId);
-            }
-
-            var session = _sessions.GetOrAdd(sessId, CreateSession);
-
-            context.State.Session = session;
-
-            return next();
-        }
-        private TSession CreateSession(string sessionId)
-        {
-            return _sessionFactory();
-        }
-    }
+    
 }

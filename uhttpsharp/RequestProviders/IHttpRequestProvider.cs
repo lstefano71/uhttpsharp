@@ -1,4 +1,5 @@
 using System.IO;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
 namespace uhttpsharp.RequestProviders
@@ -11,7 +12,7 @@ namespace uhttpsharp.RequestProviders
         /// </summary>
         /// <param name="streamReader"></param>
         /// <returns></returns>
-        Task<IHttpRequest> Provide(StreamReader streamReader);
+        Task<IHttpRequest> Provide(IStreamReader streamReader);
 
     }
 }

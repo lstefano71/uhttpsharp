@@ -2,7 +2,7 @@
 <package>
 	<metadata>
 		<id>uHttpSharp</id>
-		<version>0.1.6.11</version>
+		<version>0.1.6.22</version>
 		<title>uHttpSharp</title>
 		<authors>Shani Elharrar, Joe White, Hüseyin Uslu</authors>
 		<owners>Shani Elharrar, Joe White, Hüseyin Uslu</owners>
@@ -14,8 +14,7 @@
 		<copyright>Copyright 2014</copyright>
 		<tags>http server microframeworks</tags>
 		<dependencies>
-			<dependency id="Newtonsoft.Json" version="5.0.8" />
-			<dependency id="log4net" version="2.0.3" />
+			<dependency id="Newtonsoft.Json" version="6.0.6" />
 		</dependencies>
 	</metadata>
 	<files>

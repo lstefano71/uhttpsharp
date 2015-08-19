@@ -17,16 +17,18 @@
  */
 
 using System.Text;
-using log4net;
 using System.Net;
 using System.Reflection;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using uhttpsharp.Clients;
 using uhttpsharp.Headers;
 using uhttpsharp.RequestProviders;
+using uhttpsharp.Logging;
 
 namespace uhttpsharp
 {
@@ -35,7 +37,7 @@ namespace uhttpsharp
         private const string CrLf = "\r\n";
         private static readonly byte[] CrLfBuffer = Encoding.UTF8.GetBytes(CrLf);
 
-        private static readonly ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
         
         private readonly IClient _client;
         private readonly Func<IHttpContext, Task> _requestHandler;
@@ -51,7 +53,7 @@ namespace uhttpsharp
             _requestHandler = requestHandler;
             _requestProvider = requestProvider;
 
-            _stream = new BufferedStream(_client.Stream, 8192);
+            _stream = new BufferedStream(_client.Stream, 8096);
             
             Logger.InfoFormat("Got Client {0}", _remoteEndPoint);
 
@@ -67,10 +69,11 @@ namespace uhttpsharp
                 while (_client.Connected)
                 {
                     // TODO : Configuration.
-                    var limitedStream = new NotFlushingStream(new LimitedStream(_stream, readLimit: 1024*1024, writeLimit: 1024*1024));
-                    var streamReader = new StreamReader(limitedStream);
-                    
-                    var request = await _requestProvider.Provide(streamReader).ConfigureAwait(false);
+                    var limitedStream = new NotFlushingStream(new LimitedStream(_stream));
+
+
+
+                    var request = await _requestProvider.Provide(new MyStreamReader(limitedStream)).ConfigureAwait(false);
 
                     if (request != null)
                     {
@@ -79,6 +82,7 @@ namespace uhttpsharp
                         var context = new HttpContext(request, _client.RemoteEndPoint);
 
                         Logger.InfoFormat("{1} : Got request {0}", request.Uri, _client.RemoteEndPoint);
+
 
                         await _requestHandler(context).ConfigureAwait(false);
 
@@ -106,7 +110,7 @@ namespace uhttpsharp
             catch (Exception e)
             {
                 // Hate people who make bad calls.
-                Logger.Warn(string.Format("Error while serving : {0}", _remoteEndPoint), e);
+                Logger.WarnException(string.Format("Error while serving : {0}", _remoteEndPoint), e);
                 _client.Close();
             }
 
@@ -137,6 +141,7 @@ namespace uhttpsharp
 
             // Empty Line
             await writer.WriteLineAsync().ConfigureAwait(false);
+            writer.Flush();
 
             // Body
             await response.WriteBody(writer).ConfigureAwait(false);

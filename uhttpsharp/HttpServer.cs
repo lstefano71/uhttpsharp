@@ -16,19 +16,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-using log4net;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using uhttpsharp.Listeners;
 using uhttpsharp.RequestProviders;
+using uhttpsharp.Logging;
 
 namespace uhttpsharp
 {
     public sealed class HttpServer : IDisposable
     {
-        private static readonly ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
 
         private bool _isActive;
 
@@ -78,7 +78,7 @@ namespace uhttpsharp
                 }
                 catch (Exception e)
                 {
-                    Logger.Warn("Error while getting client", e);
+                    Logger.WarnException("Error while getting client", e);
                 }
             }
 

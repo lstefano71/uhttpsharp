@@ -36,11 +36,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="log4net">
-      <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\packages\Newtonsoft.Json.6.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -55,6 +53,7 @@
     <Compile Include="..\AssemblyCommon.cs">
       <Link>Properties\AssemblyCommon.cs</Link>
     </Compile>
+    <Compile Include="App_Packages\LibLog.3.1\LibLog.cs" />
     <Compile Include="Attributes\IModelBinding.cs" />
     <Compile Include="Attributes\HttpMethodAttribute.cs" />
     <Compile Include="Clients\ClientSslDecoerator.cs" />
@@ -63,6 +62,7 @@
     <Compile Include="Controllers\IErrorContainer.cs" />
     <Compile Include="Controllers\IRequestParameter.cs" />
     <Compile Include="Attributes\NullableAttribute.cs" />
+    <Compile Include="Handlers\BasicAuthenticationHandler.cs" />
     <Compile Include="Handlers\ClassRouter.cs" />
     <Compile Include="Handlers\Compression\CompressionHandler.cs" />
     <Compile Include="Handlers\ControllerHandler.cs" />
@@ -79,6 +79,7 @@
     <Compile Include="Handlers\IView.cs" />
     <Compile Include="Handlers\JsonResponseProvider.cs" />
     <Compile Include="Handlers\RestHandler.cs" />
+    <Compile Include="Handlers\SessionHandler.cs" />
     <Compile Include="Headers\CompositeHttpHeaders.cs" />
     <Compile Include="Headers\EmptyHttpHeaders.cs" />
     <Compile Include="Headers\HttpHeaders.cs" />
@@ -112,6 +113,7 @@
     <Compile Include="RequestProviders\HttpRequestProvider.cs" />
     <Compile Include="RequestProviders\HttpRequestProviderMethodOverrideDecorator.cs" />
     <Compile Include="RequestProviders\IHttpRequestProvider.cs" />
+    <Compile Include="RequestProviders\IStreamReader.cs" />
     <Compile Include="TaskFactoryExtensions.cs" />
     <Compile Include="Clients\TcpClientAdapter.cs" />
   </ItemGroup>

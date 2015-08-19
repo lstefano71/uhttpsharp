@@ -6,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using uhttpsharp.RequestProviders;
+using uhttpsharp.Logging;
 
 namespace uhttpsharp.Headers
 {
@@ -43,15 +45,10 @@ namespace uhttpsharp.Headers
 
     internal class HttpPost : IHttpPost
     {
-        public static async Task<IHttpPost> Create(StreamReader reader, int postContentLength)
+        public static async Task<IHttpPost> Create(IStreamReader reader, int postContentLength, ILog logger)
         {
-            char[] rawEncoded = new char[postContentLength];
-            
-            int readBytes = await reader.ReadAsync(rawEncoded, 0, rawEncoded.Length).ConfigureAwait(false);
-
-            byte[] raw = Encoding.UTF8.GetBytes(rawEncoded, 0, readBytes);
-            
-            return new HttpPost(raw, readBytes);
+            byte[] raw = await reader.ReadBytes(postContentLength).ConfigureAwait(false);
+            return new HttpPost(raw, postContentLength);
         }
 
         private readonly int _readBytes;

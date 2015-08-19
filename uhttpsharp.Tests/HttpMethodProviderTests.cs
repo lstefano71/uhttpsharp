@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using Shouldly;
 using NUnit.Framework;
 
 namespace uhttpsharp.Tests
 {
-    [TestFixture]
     public class HttpMethodProviderTests
     {
 
@@ -14,25 +14,35 @@ namespace uhttpsharp.Tests
         }
 
 
-        private IEnumerable<string> Methods
+        public static IEnumerable<object> Methods
         {
             get
             {
                 return Enum.GetNames(typeof(HttpMethods));
             }
         }
-            
-        [TestCaseSource("Methods")]
-        public void Should_Get_Right_Method(string methodName)
+        
+        [Test]
+        [TestCase(HttpMethods.Connect)]
+        [TestCase(HttpMethods.Delete)]
+        [TestCase(HttpMethods.Get)]
+        [TestCase(HttpMethods.Head)]
+        [TestCase(HttpMethods.Options)]
+        [TestCase(HttpMethods.Patch)]
+        [TestCase(HttpMethods.Post)]
+        [TestCase(HttpMethods.Put)]
+        [TestCase(HttpMethods.Trace)]
+        public void Should_Get_Right_Method(HttpMethods method)
         {
             // Arrange
+            var methodName = Enum.GetName(typeof(HttpMethods), method);
             var target = GetTarget();
 
             // Act
             var actual = target.Provide(methodName);
 
             // Assert
-            Assert.IsTrue(StringComparer.InvariantCultureIgnoreCase.Equals(actual.ToString(), methodName));
+            actual.ToString().ShouldBe(methodName);
         }
 
     }

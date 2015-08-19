@@ -2,14 +2,14 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
-using log4net;
 using uhttpsharp;
+using uhttpsharp.Logging;
 
 namespace uhttpsharpdemo.Handlers
 {
     public class TimingHandler : IHttpRequestHandler
     {
-        private static readonly ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
 
         public async Task Handle(IHttpContext context, Func<Task> next)
         {

@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
+using System.Text;
 using System.Threading.Tasks;
 using uhttpsharp.Headers;
+using uhttpsharp.Logging;
 
 namespace uhttpsharp.RequestProviders
 {
@@ -11,10 +14,12 @@ namespace uhttpsharp.RequestProviders
     {
         private static readonly char[] Separators = { '/' };
 
-        public async Task<IHttpRequest> Provide(StreamReader streamReader)
+        private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
+        
+        public async Task<IHttpRequest> Provide(IStreamReader reader)
         {
             // parse the http request
-            var request = await streamReader.ReadLineAsync().ConfigureAwait(false);
+            var request = await reader.ReadLine().ConfigureAwait(false);
 
             if (request == null)
                 return null;
@@ -46,7 +51,7 @@ namespace uhttpsharp.RequestProviders
             // get the headers
             string line;
 
-            while (!string.IsNullOrEmpty((line = await streamReader.ReadLineAsync().ConfigureAwait(false))))
+            while (!string.IsNullOrEmpty((line = await reader.ReadLine().ConfigureAwait(false))))
             {
                 string currentLine = line;
 
@@ -55,7 +60,7 @@ namespace uhttpsharp.RequestProviders
             }
 
             IHttpHeaders headers = new HttpHeaders(headersRaw.ToDictionary(k => k.Key, k => k.Value, StringComparer.InvariantCultureIgnoreCase));
-            IHttpPost post = await GetPostData(streamReader, headers).ConfigureAwait(false);
+            IHttpPost post = await GetPostData(reader, headers).ConfigureAwait(false);
 
             string verb;
             if (!headers.TryGetByName("_method", out verb))
@@ -66,6 +71,7 @@ namespace uhttpsharp.RequestProviders
             return new HttpRequest(headers, httpMethod, httpProtocol, uri,
                 uri.OriginalString.Split(Separators, StringSplitOptions.RemoveEmptyEntries), queryString, post);
         }
+
         private static IHttpHeaders GetQueryStringData(ref string url)
         {
             var queryStringIndex = url.IndexOf('?');
@@ -82,13 +88,13 @@ namespace uhttpsharp.RequestProviders
             return queryString;
         }
 
-        private static async Task<IHttpPost> GetPostData(StreamReader streamReader, IHttpHeaders headers)
+        private static async Task<IHttpPost> GetPostData(IStreamReader streamReader, IHttpHeaders headers)
         {
             int postContentLength;
             IHttpPost post;
             if (headers.TryGetByName("content-length", out postContentLength) && postContentLength > 0)
             {
-                post = await HttpPost.Create(streamReader, postContentLength).ConfigureAwait(false);
+                post = await HttpPost.Create(streamReader, postContentLength, Logger).ConfigureAwait(false);
             }
             else
             {

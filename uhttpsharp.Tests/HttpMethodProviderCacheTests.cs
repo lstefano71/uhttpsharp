@@ -1,9 +1,9 @@
-﻿using Moq;
+﻿using NSubstitute;
 using NUnit.Framework;
+using Shouldly;
 
 namespace uhttpsharp.Tests
 {
-    [TestFixture]
     public class HttpMethodProviderCacheTests
     {
         private const string MethodName = "Hello World";
@@ -17,14 +17,14 @@ namespace uhttpsharp.Tests
         public void Should_Call_Child_With_Right_Parameters()
         {
             // Arrange
-            var mock = new Mock<IHttpMethodProvider>();
-            var target = GetTarget(mock.Object);
+            var mock = Substitute.For<IHttpMethodProvider>();
+            var target = GetTarget(mock);
 
             // Act
             target.Provide(MethodName);
 
             // Assert
-            mock.Verify(m => m.Provide(MethodName), Times.Once);
+            mock.Received(1).Provide(MethodName);
         }
 
         [Test]
@@ -33,24 +33,24 @@ namespace uhttpsharp.Tests
             // Arrange
             const HttpMethods expectedMethod = HttpMethods.Post;
 
-            var mock = new Mock<IHttpMethodProvider>();
-            var target = GetTarget(mock.Object);
+            var mock = Substitute.For<IHttpMethodProvider>();
+            mock.Provide(MethodName).Returns(expectedMethod);
+            var target = GetTarget(mock);
 
-            mock.Setup(m => m.Provide(MethodName)).Returns(expectedMethod);
 
             // Act
             var actual = target.Provide(MethodName);
 
             // Assert
-            Assert.That(actual, Is.EqualTo(expectedMethod));
+            actual.ShouldBe(expectedMethod);
         }
 
         [Test]
         public void Should_Cache_The_Value()
         {
             // Arrange
-            var mock = new Mock<IHttpMethodProvider>();
-            var target = GetTarget(mock.Object);
+            var mock = Substitute.For<IHttpMethodProvider>();
+            var target = GetTarget(mock);
 
             // Act
             target.Provide(MethodName);
@@ -58,7 +58,7 @@ namespace uhttpsharp.Tests
             target.Provide(MethodName);
 
             // Assert
-            mock.Verify(m => m.Provide(MethodName), Times.Once);
+            mock.Received(1).Provide(MethodName);
         }
 
     }

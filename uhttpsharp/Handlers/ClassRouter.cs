@@ -117,6 +117,8 @@ namespace uhttpsharp.Handlers
         }
         internal static Func<IHttpContext, T, string, Task<T>> CreateIndexerFunction<T>(Type arg, MethodInfo indexer)
         {
+            AssertIndexerParameters<T>(indexer);
+
             var parameterType = indexer.GetParameters()[1].ParameterType;
 
             var httpContext = Expression.Parameter(typeof(IHttpContext), "context");
@@ -136,7 +138,7 @@ namespace uhttpsharp.Handlers
                             Expression.Constant(parameterType)), parameterType);
 
                 var indexerExpression = Expression.Call (handlerConverted, indexer, httpContext, objectConverted);
-                var returnValue = Expression.Convert (indexerExpression, typeof(T));
+                var returnValue = Expression.Convert (indexerExpression, typeof(Task<T>));
 
                 body = returnValue;
             }
@@ -168,6 +170,23 @@ namespace uhttpsharp.Handlers
                     inputHandler,
                     inputObject).Compile();
         }
+        private static void AssertIndexerParameters<T>(MethodInfo methodInfo)
+        {
+            var parameters = methodInfo.GetParameters();
+
+            if (parameters.Length != 2 || parameters[0].ParameterType != typeof(IHttpContext))
+            {
+                throw new ArgumentException(
+                    string.Format(
+                        "Indexer Method ({2}.{3}) should always receive two parameters, The first one should be of type {0} and the second should be of primitive type (string, int, long, etc'). Also, It must return {1}.",
+                        typeof(IHttpContext).FullName, typeof(Task<T>).FullName, methodInfo.DeclaringType, methodInfo.Name));
+            }
+
+            if (methodInfo.ReturnType != typeof(Task<T>))
+            {
+                throw new ArgumentException(string.Format("Indexer method should always return {0}.", typeof(Task<T>).FullName));
+            }
+        }
         private MethodInfo GetIndexer(Type arg)
         {
             var indexer =
@@ -198,5 +217,15 @@ namespace uhttpsharp.Handlers
 
     public class IndexerAttribute : Attribute
     {
+        private readonly int _precedence;
+
+        public IndexerAttribute(int precedence = 0)
+        {
+            _precedence = precedence;
+        }
+        public int Precedence
+        {
+            get { return _precedence; }
+        }
     }
 }
